@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "esModuleInterop": true,
+        "strict": true,
+        "outDir": "dist",
+        "declaration": true, // 生成 .d.ts 文件
+        "emitDeclarationOnly": true, // 仅生成 .d.ts 文件
+        "declarationDir": "./types", // 指定输出目录
+        "rootDir": "src"
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "files": [
+        "src/index.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "lib",
+        "test"
+    ]
+}

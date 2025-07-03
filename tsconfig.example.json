@@ -1,0 +1,25 @@
+{
+    "extends": "./tsconfig.app.json",
+    "compilerOptions": {
+        // "module": "ESNext", // 可以根据需要选择 "es2020", "es2022", "esnext", "system", "node16", "node18", "nodenext" 中的一个
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ],
+            "@example/*": [
+                "./example/*"
+            ]
+        }
+    },
+    "include": [
+        "env.d.ts",
+        "example/**/*.ts",  // 包含所有 example 目录下的文件
+        "example/**/*.vue", // 包含所有 src 目录下的文件
+        "example/**/*",      // 包含所有 src 目录下的文件
+        "src/**/*.d.ts",       // 包含所有 src 目录下的文件
+    ],
+    "exclude": [
+        "node_modules", // 排除 node_modules 目录
+        "dist", // 排除 dist 目录
+    ]
+}

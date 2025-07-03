@@ -1,0 +1,15 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "tsconfig.json": "tsconfig.*.json, env.d.ts",
+    "vite.config.*": "jsconfig*, vitest.config.*, cypress.config.*, playwright.config.*",
+    "package.json": "package-lock.json, pnpm*, .yarnrc*, yarn*, .eslint*, eslint*, .oxlint*, oxlint*, .prettier*, prettier*, .editorconfig"
+  },
+  "files.associations": {
+    // 匹配路径中包含 config/ 且后缀为 .json 的文件
+    "**/config/*.json": "jsonc",
+    // 或者指定其他子目录
+    "**/src/config/*.json": "jsonc",
+    "*.config.json": "jsonc"
+  }
+}

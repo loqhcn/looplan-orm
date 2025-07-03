@@ -1,0 +1,24 @@
+{
+    "name":"测试模型引用",
+    "gateway":"http://model.lqh.cn",
+    "userId":77,
+    "appId":77001,
+    "accessToken":"content@123456",
+    // 认证配置
+    "auth":[
+        {
+            "name":"user",
+            "model":"ct_user",
+            "plugins":[
+
+            ]
+        },
+        {
+            "name":"admin",
+            "model":"ct_admin",
+            "plugins":[
+                
+            ]
+        }
+    ]
+}
