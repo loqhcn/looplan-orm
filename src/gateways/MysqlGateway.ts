@@ -41,9 +41,9 @@ class MysqlGateway {
         }
         
         // 从配置中获取连接信息
-        if (db.options.alias) {
-            obj.connectionName = db.options.alias;
-            const connectionConfig = databaseConfig.getConnection(db.options.alias);
+        if (db.options.connectionName) {
+            obj.connectionName = db.options.connectionName;
+            const connectionConfig = databaseConfig.getConnection(db.options.connectionName);
             if (connectionConfig) {
                 obj.config = {
                     host: connectionConfig.host,
@@ -100,26 +100,30 @@ class MysqlGateway {
                     const op = operator.toLowerCase();
                     
                     if (op === 'in' && Array.isArray(value)) {
-                        const valueStr = value.map(v => this.formatValue(v)).join(', ');
+                        const valueStr = value.map(v => this.formatValue(v, field)).join(', ');
                         conditions.push(`${field} IN (${valueStr})`);
                     } else if (op === 'not in' && Array.isArray(value)) {
-                        const valueStr = value.map(v => this.formatValue(v)).join(', ');
+                        const valueStr = value.map(v => this.formatValue(v, field)).join(', ');
                         conditions.push(`${field} NOT IN (${valueStr})`);
                     } else if (op === 'between' && Array.isArray(value) && value.length >= 2) {
-                        conditions.push(`${field} BETWEEN ${this.formatValue(value[0])} AND ${this.formatValue(value[1])}`);
+                        conditions.push(`${field} BETWEEN ${this.formatValue(value[0], field)} AND ${this.formatValue(value[1], field)}`);
                     } else if (op === 'not between' && Array.isArray(value) && value.length >= 2) {
-                        conditions.push(`${field} NOT BETWEEN ${this.formatValue(value[0])} AND ${this.formatValue(value[1])}`);
+                        conditions.push(`${field} NOT BETWEEN ${this.formatValue(value[0], field)} AND ${this.formatValue(value[1], field)}`);
                     } else if (op === 'like') {
-                        conditions.push(`${field} LIKE ${this.formatValue(value)}`);
+                        conditions.push(`${field} LIKE ${this.formatValue(value, field)}`);
                     } else if (op === 'not like') {
-                        conditions.push(`${field} NOT LIKE ${this.formatValue(value)}`);
+                        conditions.push(`${field} NOT LIKE ${this.formatValue(value, field)}`);
                     } else {
-                        conditions.push(`${field} ${operator} ${this.formatValue(value)}`);
+                        conditions.push(`${field} ${operator} ${this.formatValue(value, field)}`);
                     }
                 } else if (condition.length === 2) {
                     // [字段, 值] - 默认为等于
                     const [field, value] = condition;
-                    conditions.push(`${field} = ${this.formatValue(value)}`);
+                    if (value === null) {
+                        conditions.push(`${field} IS NULL`);
+                    } else {
+                        conditions.push(`${field} = ${this.formatValue(value, field)}`);
+                    }
                 }
             } else if (typeof condition === 'string') {
                 // 原始SQL片段
@@ -127,7 +131,70 @@ class MysqlGateway {
             } else if (typeof condition === 'object' && 'type' in condition && 'value' in condition) {
                 // 处理OR条件
                 if (condition.type === 'or') {
-                    conditions.push(`OR ${condition.value}`);
+                    const orValue = condition.value;
+                    
+                    if (typeof orValue === 'string') {
+                        // 已经是字符串的条件
+                        conditions.push(`OR ${orValue}`);
+                    } else if (typeof orValue === 'object') {
+                        // 需要格式化的延迟条件
+                        let formattedOrCondition = '';
+                        
+                        if ('condition' in orValue && Array.isArray(orValue.condition)) {
+                            // 处理 [字段, 值] 或 [字段, 操作符, 值] 格式
+                            const conditionArr = orValue.condition;
+                            if (conditionArr.length === 2) {
+                                const [field, value] = conditionArr;
+                                if (value === null) {
+                                    formattedOrCondition = `${field} IS NULL`;
+                                } else {
+                                    formattedOrCondition = `${field} = ${this.formatValue(value, field)}`;
+                                }
+                            } else if (conditionArr.length === 3) {
+                                const [field, operator, value] = conditionArr;
+                                const op = operator.toLowerCase();
+                                
+                                if (value === null) {
+                                    if (op === '=' || op === 'is') {
+                                        formattedOrCondition = `${field} IS NULL`;
+                                    } else if (op === '!=' || op === '<>' || op === 'is not') {
+                                        formattedOrCondition = `${field} IS NOT NULL`;
+                                    }
+                                } else if (op === 'in' && Array.isArray(value)) {
+                                    const valueStr = value.map(v => this.formatValue(v, field)).join(', ');
+                                    formattedOrCondition = `${field} IN (${valueStr})`;
+                                } else if (op === 'not in' && Array.isArray(value)) {
+                                    const valueStr = value.map(v => this.formatValue(v, field)).join(', ');
+                                    formattedOrCondition = `${field} NOT IN (${valueStr})`;
+                                } else if (op === 'between' && Array.isArray(value) && value.length >= 2) {
+                                    formattedOrCondition = `${field} BETWEEN ${this.formatValue(value[0], field)} AND ${this.formatValue(value[1], field)}`;
+                                } else if (op === 'not between' && Array.isArray(value) && value.length >= 2) {
+                                    formattedOrCondition = `${field} NOT BETWEEN ${this.formatValue(value[0], field)} AND ${this.formatValue(value[1], field)}`;
+                                } else if (op === 'like') {
+                                    formattedOrCondition = `${field} LIKE ${this.formatValue(value, field)}`;
+                                } else if (op === 'not like') {
+                                    formattedOrCondition = `${field} NOT LIKE ${this.formatValue(value, field)}`;
+                                } else {
+                                    formattedOrCondition = `${field} ${operator} ${this.formatValue(value, field)}`;
+                                }
+                            }
+                        } else if ('object' in orValue) {
+                            // 处理对象形式的条件
+                            const objConditions: string[] = [];
+                            Object.entries(orValue.object).forEach(([key, value]) => {
+                                if (value === null) {
+                                    objConditions.push(`${key} IS NULL`);
+                                } else {
+                                    objConditions.push(`${key} = ${this.formatValue(value, key)}`);
+                                }
+                            });
+                            formattedOrCondition = `(${objConditions.join(' AND ')})`;
+                        }
+                        
+                        if (formattedOrCondition) {
+                            conditions.push(`OR ${formattedOrCondition}`);
+                        }
+                    }
                 } else {
                     conditions.push(condition.value);
                 }
@@ -165,19 +232,29 @@ class MysqlGateway {
     }
     
     /**
-     * 格式化值，处理原生SQL和普通值
+     * 格式化值，处理原生SQL和普通值（用于参数化查询）
      * @param value 要格式化的值
+     * @param fieldName 字段名，用于生成有意义的参数名
      */
-    private formatValue(value: any): string {
+    private formatValue(value: any, fieldName?: string): string {
         if (DbRaw.isRaw(value)) {
             // 如果是DbRaw对象，直接返回其值，不加引号
             return value.value;
-        } else if (typeof value === 'string') {
-            // 字符串值加引号
-            return `'${value}'`;
         } else {
-            // 其他类型直接返回
-            return value;
+            // 参数化查询：生成命名占位符并记录参数
+            let paramName: string;
+            if (fieldName) {
+                // 清理字段名，去掉表前缀和特殊字符
+                const cleanFieldName = fieldName.replace(/.*\./, '').replace(/[^a-zA-Z0-9_]/g, '');
+                paramName = `${cleanFieldName}_${this.db?.options.paramCounter || 0}`;
+            } else {
+                paramName = `param_${this.db?.options.paramCounter || 0}`;
+            }
+            if (this.db) {
+                this.db.options.params[paramName] = value;
+                this.db.options.paramCounter++;
+            }
+            return `:${paramName}`;
         }
     }
     
@@ -270,17 +347,24 @@ class MysqlGateway {
             throw new Error('Database instance is not initialized');
         }
         
+        // 重置命名参数
+        this.db.options.params = {};
+        this.db.options.paramCounter = 0;
+        
         // 生成sql语句
         let sql = '';
         
         if (this.actionName === 'select') {
             const {
                 table,
+                alias,
                 fields,
                 distinct
             } = this.db.options;
 
-            sql = `SELECT ${distinct ? 'DISTINCT ' : ''}${fields} FROM ${table}`;
+            // 构建表名，如果有别名则添加别名
+            const tableWithAlias = alias ? `${table} ${alias}` : table;
+            sql = `SELECT ${distinct ? 'DISTINCT ' : ''}${fields} FROM ${tableWithAlias}`;
             
             // 添加JOIN
             sql += this.buildJoin();
@@ -302,21 +386,39 @@ class MysqlGateway {
             const { table, data } = this.db.options;
             
             const keys = Object.keys(data);
-            const values = Object.values(data).map(v => 
-                typeof v === 'string' ? `'${v}'` : v
-            );
+            const values = Object.values(data);
             
-            sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${values.join(', ')})`;
+            // 将数据值添加到命名参数
+            const placeholders = values.map((value, index) => {
+                const fieldName = keys[index];
+                const paramName = `${fieldName}_${this.db?.options.paramCounter || 0}`;
+                if (this.db) {
+                    this.db.options.params[paramName] = value;
+                    this.db.options.paramCounter++;
+                }
+                return `:${paramName}`;
+            }).join(', ');
+            
+            sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
             
         } else if (this.actionName === 'insertGetId') {
             const { table, data } = this.db.options;
             
             const keys = Object.keys(data);
-            const values = Object.values(data).map(v => 
-                typeof v === 'string' ? `'${v}'` : v
-            );
+            const values = Object.values(data);
             
-            sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${values.join(', ')})`;
+            // 将数据值添加到命名参数
+            const placeholders = values.map((value, index) => {
+                const fieldName = keys[index];
+                const paramName = `${fieldName}_${this.db?.options.paramCounter || 0}`;
+                if (this.db) {
+                    this.db.options.params[paramName] = value;
+                    this.db.options.paramCounter++;
+                }
+                return `:${paramName}`;
+            }).join(', ');
+            
+            sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
             
         } else if (this.actionName === 'insertAll') {
             const { table, dataList } = this.db.options;
@@ -328,11 +430,16 @@ class MysqlGateway {
             // 获取所有字段（以第一个数据对象的键为准）
             const keys = Object.keys(dataList[0]);
             
-            // 构建VALUES部分
-            const valuesList = dataList.map(item => {
+            // 构建VALUES部分 - 使用命名参数化查询
+            const valuesList = dataList.map((item, rowIndex) => {
                 const values = keys.map(key => {
                     const val = item[key];
-                    return typeof val === 'string' ? `'${val}'` : val;
+                    const paramName = `${key}_${rowIndex}_${this.db?.options.paramCounter || 0}`;
+                    if (this.db) {
+                        this.db.options.params[paramName] = val;
+                        this.db.options.paramCounter++;
+                    }
+                    return `:${paramName}`;
                 });
                 return `(${values.join(', ')})`;
             });
@@ -340,22 +447,31 @@ class MysqlGateway {
             sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES ${valuesList.join(', ')}`;
             
         } else if (this.actionName === 'update') {
-            const { table, data } = this.db.options;
+            const { table, alias, data } = this.db.options;
             
-            const sets = Object.entries(data).map(([key, value]) => 
-                `${key} = ${typeof value === 'string' ? `'${value}'` : value}`
-            );
+            const sets = Object.entries(data).map(([key, value]) => {
+                const paramName = `${key}_${this.db?.options.paramCounter || 0}`;
+                if (this.db) {
+                    this.db.options.params[paramName] = value;
+                    this.db.options.paramCounter++;
+                }
+                return `${key} = :${paramName}`;
+            });
             
-            sql = `UPDATE ${table} SET ${sets.join(', ')}`;
+            // 构建表名，如果有别名则添加别名
+            const tableWithAlias = alias ? `${table} ${alias}` : table;
+            sql = `UPDATE ${tableWithAlias} SET ${sets.join(', ')}`;
             
             // 添加WHERE条件
             sql += this.buildWhere();
             
             
         } else if (this.actionName === 'delete') {
-            const { table } = this.db.options;
+            const { table, alias } = this.db.options;
             
-            sql = `DELETE FROM ${table}`;
+            // 构建表名，如果有别名则添加别名
+            const tableWithAlias = alias ? `${table} ${alias}` : table;
+            sql = `DELETE FROM ${tableWithAlias}`;
             
             // 添加WHERE条件
             sql += this.buildWhere();
@@ -364,9 +480,11 @@ class MysqlGateway {
         } else if (this.actionName === 'count' || this.actionName === 'sum' || 
                   this.actionName === 'avg' || this.actionName === 'max' || 
                   this.actionName === 'min') {
-            const { table, field } = this.db.options;
+            const { table, alias, field } = this.db.options;
             
-            sql = `SELECT ${this.actionName.toUpperCase()}(${field || '*'}) AS ${this.actionName} FROM ${table}`;
+            // 构建表名，如果有别名则添加别名
+            const tableWithAlias = alias ? `${table} ${alias}` : table;
+            sql = `SELECT ${this.actionName.toUpperCase()}(${field || '*'}) AS ${this.actionName} FROM ${tableWithAlias}`;
             
             // 添加WHERE条件
             sql += this.buildWhere();
@@ -382,8 +500,25 @@ class MysqlGateway {
         try {
             // 如果需要返回sql语句
             if (this.db.options.fetchSql) {
-                // console.log('仅返回SQL:', sql);
-                return sql;
+                // fetchSql模式：返回填充了参数的SQL用于调试
+                const params = this.db.getParams();
+                let displaySql = sql;
+                
+                // 将命名占位符替换为实际值（仅用于显示）
+                Object.entries(params).forEach(([paramName, paramValue]) => {
+                    const placeholder = `:${paramName}`;
+                    let replacement: string;
+                    if (typeof paramValue === 'string') {
+                        replacement = `'${paramValue.replace(/'/g, "\\'")}'`;
+                    } else if (paramValue === null) {
+                        replacement = 'NULL';
+                    } else {
+                        replacement = String(paramValue);
+                    }
+                    displaySql = displaySql.replace(placeholder, replacement);
+                });
+                
+                return displaySql;
             }
             
             // 确保有连接可用
@@ -396,8 +531,25 @@ class MysqlGateway {
                 console.log('使用已有连接:', this.connection.threadId);
             }
             
+            // 获取参数并执行参数化查询
+            const namedParams = this.db.getParams();
             console.log('执行SQL:', sql);
-            const [result] = await this.connection.query(sql);
+            console.log('命名参数:', namedParams);
+            
+            // 将命名占位符转换为MySQL的?占位符
+            let executableSql = sql;
+            const paramValues: any[] = [];
+            
+            Object.entries(namedParams).forEach(([paramName, paramValue]) => {
+                const placeholder = `:${paramName}`;
+                executableSql = executableSql.replace(placeholder, '?');
+                paramValues.push(paramValue);
+            });
+            
+            console.log('可执行SQL:', executableSql);
+            console.log('参数值数组:', paramValues);
+            
+            const [result] = await this.connection.execute(executableSql, paramValues);
             
             // 处理insertGetId的返回值，返回插入的ID
             if (this.actionName === 'insertGetId' && result && 'insertId' in result) {

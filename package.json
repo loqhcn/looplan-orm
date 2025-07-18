@@ -1,6 +1,6 @@
 {
   "name": "looplan-orm",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "engines": {
     "node": ">=16.0.0"
@@ -11,21 +11,25 @@
     "build:types": "tsc --build tsconfig.build.json",
     "preview": "vite preview"
   },
-  "keywords": ["orm", "nodejs", "database"],
+  "keywords": [
+    "orm",
+    "nodejs",
+    "database"
+  ],
   "author": "",
   "license": "ISC",
   "description": "A Node.js ORM library for database operations",
   "dependencies": {
-    "axios": "^1.8.4",
     "mongodb": "^6.16.0",
     "mysql2": "^3.14.1"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.1",
+    "@types/bun": "latest",
     "@types/node": "^22.14.0",
+    "axios": "^1.10.0",
     "typescript": "^5.8.2",
-    "vite": "^6.2.3",
-    "vitest": "^3.1.1"
+    "vite": "^7.0.2"
   },
   "files": [
     "lib",
@@ -43,5 +47,10 @@
       "require": "./lib/looplan-orm.cjs.js"
     }
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loqhcn/looplan-orm.git"
+  }
 }

@@ -1,5 +1,6 @@
 interface DbOptions {
-    alias: string;
+    alias: string; // 表别名
+    connectionName: string; // 数据库连接名称
     table: string;
     fields: string | string[];
     where: any[];
@@ -17,6 +18,8 @@ interface DbOptions {
         type: string;
     }>;
     transaction: boolean;
+    params: Record<string, any>;
+    paramCounter: number;
 }
 
 interface QueryGateway {
@@ -54,7 +57,8 @@ class Db {
 
     constructor() {
         this.options = {
-            alias: '', // 别名，用于区分不同的数据库实例
+            alias: '', // 表别名，用于SQL中的AS语句
+            connectionName: '', // 数据库连接名称
             table: '',
             fields: '*',
             where: [],
@@ -66,7 +70,9 @@ class Db {
             fetchSql: false,
             field: null, // 用于聚合函数
             join: [],
-            transaction: false
+            transaction: false,
+            params: {},
+            paramCounter: 0
         }
     }
 
@@ -143,61 +149,34 @@ class Db {
                 arg1(subQuery);
                 // 如果子查询有条件, 将其作为OR条件添加
                 if (subQuery.options.where.length > 0) {
-                    const conditions = subQuery.options.where;
-                    let orClause = '';
-
-                    if (conditions.length === 1) {
-                        const condition = conditions[0];
-                        if (typeof condition === 'string') {
-                            orClause = condition;
-                        } else {
-                            orClause = this.formatWhereItem(condition);
-                        }
-                    } else {
-                        orClause = conditions.map(cond => {
-                            if (typeof cond === 'string') {
-                                return `(${cond})`;
-                            } else {
-                                return this.formatWhereItem(cond);
-                            }
-                        }).join(' AND ');
-                        orClause = `(${orClause})`;
-                    }
-
-                    // 添加到where条件中, 使用OR操作符
-                    this.options.where.push({ type: 'or', value: orClause });
+                    // 延迟格式化，将原始条件存储
+                    this.options.where.push({ type: 'or', value: { subQuery: subQuery.options.where } });
                 }
             } else if (typeof arg1 === 'string') {
                 // 原始SQL条件
                 this.options.where.push({ type: 'or', value: arg1 });
             } else if (typeof arg1 === 'object') {
-                // 对象形式的条件
-                const conditions: string[] = [];
-
-                Object.entries(arg1).forEach(([key, value]) => {
-                    conditions.push(this.formatWhereItem([key, value]));
-                });
-
-                this.options.where.push({ type: 'or', value: `(${conditions.join(' AND ')})` });
+                // 对象形式的条件 - 延迟格式化
+                this.options.where.push({ type: 'or', value: { object: arg1 } });
             }
         } else if (arguments.length === 2) {
-            // 字段和值
-            this.options.where.push({ type: 'or', value: this.formatWhereItem([arg1, arg2]) });
+            // 字段和值 - 延迟格式化
+            this.options.where.push({ type: 'or', value: { condition: [arg1, arg2] } });
         } else if (arguments.length === 3) {
-            // 字段，操作符，值
-            this.options.where.push({ type: 'or', value: this.formatWhereItem([arg1, arg2, arg3]) });
+            // 字段，操作符，值 - 延迟格式化
+            this.options.where.push({ type: 'or', value: { condition: [arg1, arg2, arg3] } });
         }
 
         return this;
     }
 
-    private formatWhereItem(item: any[]): string {
+    private formatWhereItem(item: any[], forDisplay: boolean = false): string {
         if (item.length === 2) {
             const [field, value] = item;
             if (value === null) {
                 return `${field} IS NULL`;
             }
-            return `${field} = ${this.formatValue(value)}`;
+            return `${field} = ${this.formatValue(value, forDisplay, field)}`;
         } else if (item.length === 3) {
             const [field, operator, value] = item;
             const op = operator.toLowerCase();
@@ -211,21 +190,21 @@ class Db {
             }
 
             if (op === 'in' && Array.isArray(value)) {
-                const values = value.map(v => this.formatValue(v)).join(', ');
+                const values = value.map(v => this.formatValue(v, forDisplay, field)).join(', ');
                 return `${field} IN (${values})`;
             } else if (op === 'not in' && Array.isArray(value)) {
-                const values = value.map(v => this.formatValue(v)).join(', ');
+                const values = value.map(v => this.formatValue(v, forDisplay, field)).join(', ');
                 return `${field} NOT IN (${values})`;
             } else if (op === 'between' && Array.isArray(value) && value.length >= 2) {
-                return `${field} BETWEEN ${this.formatValue(value[0])} AND ${this.formatValue(value[1])}`;
+                return `${field} BETWEEN ${this.formatValue(value[0], forDisplay, field)} AND ${this.formatValue(value[1], forDisplay, field)}`;
             } else if ((op === 'not between') && Array.isArray(value) && value.length >= 2) {
-                return `${field} NOT BETWEEN ${this.formatValue(value[0])} AND ${this.formatValue(value[1])}`;
+                return `${field} NOT BETWEEN ${this.formatValue(value[0], forDisplay, field)} AND ${this.formatValue(value[1], forDisplay, field)}`;
             } else if (op === 'like') {
-                return `${field} LIKE ${this.formatValue(value)}`;
+                return `${field} LIKE ${this.formatValue(value, forDisplay, field)}`;
             } else if (op === 'not like') {
-                return `${field} NOT LIKE ${this.formatValue(value)}`;
+                return `${field} NOT LIKE ${this.formatValue(value, forDisplay, field)}`;
             } else {
-                return `${field} ${operator} ${this.formatValue(value)}`;
+                return `${field} ${operator} ${this.formatValue(value, forDisplay, field)}`;
             }
         }
 
@@ -235,17 +214,34 @@ class Db {
     /**
      * 格式化值，处理原生SQL和普通值
      * @param value 要格式化的值
+     * @param forDisplay 是否用于显示（fetchSql模式）
+     * @param fieldName 字段名，用于生成有意义的参数名
      */
-    private formatValue(value: any): string {
+    private formatValue(value: any, forDisplay: boolean = false, fieldName?: string): string {
         if (DbRaw.isRaw(value)) {
             // 如果是DbRaw对象，直接返回其值，不加引号
             return value.value;
-        } else if (typeof value === 'string') {
-            // 字符串值加引号
-            return `'${value}'`;
+        } else if (forDisplay) {
+            // fetchSql模式：直接显示值（用于调试）
+            if (value === null) {
+                return 'NULL';
+            } else if (typeof value === 'string') {
+                return `'${value.replace(/'/g, "\\'")}'`; // 转义单引号
+            } else {
+                return String(value);
+            }
         } else {
-            // 其他类型直接返回
-            return value;
+            // 参数化查询模式：使用命名占位符
+            let paramName: string;
+            if (fieldName) {
+                // 清理字段名，去掉表前缀和特殊字符
+                const cleanFieldName = fieldName.replace(/.*\./, '').replace(/[^a-zA-Z0-9_]/g, '');
+                paramName = `${cleanFieldName}_${this.options.paramCounter++}`;
+            } else {
+                paramName = `param_${this.options.paramCounter++}`;
+            }
+            this.options.params[paramName] = value;
+            return `:${paramName}`;
         }
     }
 
@@ -288,6 +284,12 @@ class Db {
         return this;
     }
 
+    /**
+     * 连接表
+     * @param table 表名
+     * @param condition 连接条件
+     * @param type 连接类型，默认INNER
+     */
     join(table: string, condition: string, type: string = 'INNER'): Db {
         this.options.join.push({
             table,
@@ -297,6 +299,12 @@ class Db {
         return this;
     }
 
+    /**
+     * 
+     * @param table 
+     * @param condition 
+     * @returns 
+     */
     leftJoin(table: string, condition: string): Db {
         return this.join(table, condition, 'LEFT');
     }
@@ -331,29 +339,29 @@ class Db {
                     const op = operator.toLowerCase();
 
                     if (op === 'in' && Array.isArray(operatorValue)) {
-                        const valueStr = operatorValue.map(v => this.formatValue(v)).join(', ');
+                        const valueStr = operatorValue.map(v => this.formatValue(v, this.options.fetchSql, field)).join(', ');
                         groupConditions.push(`${field} IN (${valueStr})`);
                     } else if (op === 'not in' && Array.isArray(operatorValue)) {
-                        const valueStr = operatorValue.map(v => this.formatValue(v)).join(', ');
+                        const valueStr = operatorValue.map(v => this.formatValue(v, this.options.fetchSql, field)).join(', ');
                         groupConditions.push(`${field} NOT IN (${valueStr})`);
                     } else if (op === 'between' && Array.isArray(operatorValue) && operatorValue.length >= 2) {
-                        groupConditions.push(`${field} BETWEEN ${this.formatValue(operatorValue[0])} AND ${this.formatValue(operatorValue[1])}`);
+                        groupConditions.push(`${field} BETWEEN ${this.formatValue(operatorValue[0], this.options.fetchSql, field)} AND ${this.formatValue(operatorValue[1], this.options.fetchSql, field)}`);
                     } else if (op === 'not between' && Array.isArray(operatorValue) && operatorValue.length >= 2) {
-                        groupConditions.push(`${field} NOT BETWEEN ${this.formatValue(operatorValue[0])} AND ${this.formatValue(operatorValue[1])}`);
+                        groupConditions.push(`${field} NOT BETWEEN ${this.formatValue(operatorValue[0], this.options.fetchSql, field)} AND ${this.formatValue(operatorValue[1], this.options.fetchSql, field)}`);
                     } else if (op === 'like') {
-                        groupConditions.push(`${field} LIKE ${this.formatValue(operatorValue)}`);
+                        groupConditions.push(`${field} LIKE ${this.formatValue(operatorValue, this.options.fetchSql, field)}`);
                     } else if (op === 'not like') {
-                        groupConditions.push(`${field} NOT LIKE ${this.formatValue(operatorValue)}`);
+                        groupConditions.push(`${field} NOT LIKE ${this.formatValue(operatorValue, this.options.fetchSql, field)}`);
                     } else {
                         // 其他操作符
-                        groupConditions.push(`${field} ${operator} ${this.formatValue(operatorValue)}`);
+                        groupConditions.push(`${field} ${operator} ${this.formatValue(operatorValue, this.options.fetchSql, field)}`);
                     }
                 } else {
                     // 处理直接值：字段 = 值
                     if (value === null) {
                         groupConditions.push(`${field} IS NULL`);
                     } else {
-                        groupConditions.push(`${field} = ${this.formatValue(value)}`);
+                        groupConditions.push(`${field} = ${this.formatValue(value, this.options.fetchSql, field)}`);
                     }
                 }
             });
@@ -573,35 +581,78 @@ class Db {
         return result && result.length ? result[0].count : 0;
     }
 
-    async sum(field: string): Promise<number> {
+    async sum(field: string): Promise<number | string> {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('sum').dest();
+        
+        // 如果是fetchSql模式，直接返回SQL字符串
+        if (this.options.fetchSql) {
+            return result as string;
+        }
+        
         return result && result.length ? result[0].sum : 0;
     }
 
-    async avg(field: string): Promise<number> {
+    async avg(field: string): Promise<number | string> {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('avg').dest();
+        
+        // 如果是fetchSql模式，直接返回SQL字符串
+        if (this.options.fetchSql) {
+            return result as string;
+        }
+        
         return result && result.length ? result[0].avg : 0;
     }
 
-    async max(field: string): Promise<number> {
+    async max(field: string): Promise<number | string> {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('max').dest();
+        
+        // 如果是fetchSql模式，直接返回SQL字符串
+        if (this.options.fetchSql) {
+            return result as string;
+        }
+        
         return result && result.length ? result[0].max : 0;
     }
 
-    async min(field: string): Promise<number> {
+    async min(field: string): Promise<number | string> {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('min').dest();
+        
+        // 如果是fetchSql模式，直接返回SQL字符串
+        if (this.options.fetchSql) {
+            return result as string;
+        }
+        
         return result && result.length ? result[0].min : 0;
     }
 
     // !SECTION 增删改查
+
+    // SECTION 辅助方法
+
+    /**
+     * 重置查询参数
+     */
+    private resetParams(): void {
+        this.options.params = {};
+        this.options.paramCounter = 0;
+    }
+
+    /**
+     * 获取查询参数
+     */
+    getParams(): Record<string, any> {
+        return this.options.params;
+    }
+
+    // !SECTION 辅助方法
 
     // SECTION 事务处理
 
@@ -664,7 +715,7 @@ class Db {
         let objName = 'MysqlGateway'; // 默认使用MySQL
 
         // 可以根据配置决定使用哪个gateway
-        if (this.options.alias && this.options.alias.toLowerCase() === 'mongodb') {
+        if (this.options.connectionName && this.options.connectionName.toLowerCase() === 'mongodb') {
             objName = 'MongodbGateway';
         }
 
@@ -681,7 +732,7 @@ class Db {
 
     // 设置数据库类型
     database(type: string): Db {
-        this.options.alias = type;
+        this.options.connectionName = type;
         return this;
     }
 
@@ -724,12 +775,23 @@ class Db {
     // SECTION 连接管理
 
     /**
-     * 选择数据库连接
+     * 选择数据库连接（推荐使用）
      * @param name 连接名称
+     */
+    static selectConnect(name: string): Db {
+        const db = new Db();
+        db.options.connectionName = name;
+        return db;
+    }
+
+    /**
+     * 选择数据库连接（为了兼容性保留）
+     * @param name 连接名称
+     * @deprecated 请使用 selectConnect 方法
      */
     static connect(name: string): Db {
         const db = new Db();
-        db.options.alias = name;
+        db.options.connectionName = name;
         return db;
     }
 
