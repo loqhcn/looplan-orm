@@ -1,5 +1,10 @@
 import Db from './Db';
-import { databaseConfig,collectionPool } from './config';
+import { DbException } from './exception/DbException';
 
-export { Db, databaseConfig,collectionPool };
+import {
+    databaseConfig,
+    collectionPool
+} from './config';
+
+export { Db, DbException, databaseConfig, collectionPool };
 export default Db;

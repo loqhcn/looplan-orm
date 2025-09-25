@@ -8,6 +8,8 @@ console.log('# 测试关联模型功能');
 console.log('## 查询带有关联的数据');
 let data4 = await model('ct_news').with(['user']).find(1);
 
+console.log('data4',JSON.stringify(data4));
+
 console.log('### 关联用户数据类型:', data4.user.constructor.name);
 console.log('### 关联用户原始数据:', {
     id: data4.user.id,

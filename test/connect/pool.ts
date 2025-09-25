@@ -1,6 +1,6 @@
 // node test/curd.js
-import { Db } from '../src';
-import { databaseConfig, collectionPool } from "../src";
+import { Db } from '../../src';
+import { databaseConfig, collectionPool } from "../../src";
 
 // 设置配置
 databaseConfig.setConfig({

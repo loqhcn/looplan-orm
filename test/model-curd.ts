@@ -8,20 +8,23 @@ console.log("# 查询&修改");
 // console.log("## 获取多个数据");
 // const row = await model('ct_test1').find()
 // console.log(row);
-// row.name = 'test11111111111';
+// row.name = 'test'+Date.now();
 // await row.save();
 
 
-// const row2 = await model('ct_test1').where('id',2).find()
-// let saveRet = await row2.save({
-//     name:'name'+Date.now()
-// });
-// console.log(saveRet);
+const row2 = await model('ct_test1').where('id',2).find()
+let saveRet = await row2.save({
+    name:'name'+Date.now()
+});
+console.log(saveRet);
 
-console.log("# 删除");
-const row3 = await model('ct_test1').where('id',3).find()
-let res = await row3.delete();
-console.log(res);
+// console.log("# 删除");
+// const row3 = await model('ct_test1').where('id',3).find()
+// if(!row3){
+//     console.log('数据不存在');
+// }
+// let res = await row3.delete();
+// console.log(res);
 
 
 

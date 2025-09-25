@@ -1,54 +1,15 @@
-interface DbOptions {
-    alias: string; // 表别名
-    connectionName: string; // 数据库连接名称
-    table: string;
-    fields: string | string[];
-    where: any[];
-    orderBy: any[];
-    limitValue: number | [number, number] | null;
-    groupBy: string[];
-    data: Record<string, any>;
-    dataList?: Record<string, any>[];
-    distinct: boolean;
-    fetchSql: boolean;
-    field: string | null;
-    join: Array<{
-        table: string;
-        condition: string;
-        type: string;
-    }>;
-    transaction: boolean;
-    params: Record<string, any>;
-    paramCounter: number;
-}
+import type {
+    DbOptions,
+    PaginateResult,
+    PaginateXOptions,
+    OrderType,
+    QueryGateway
+} from './types';
 
-interface QueryGateway {
-    action(name: string): QueryGateway;
-    dest(): Promise<any>;
-    startTransaction(): Promise<any>;
-    commit(connection: any): Promise<void>;
-    rollback(connection: any): Promise<void>;
-    rawQuery(sql: string, params?: any[] | Record<string, any>): Promise<any[]>;
-    rawExecute(sql: string, params?: any[] | Record<string, any>): Promise<number>;
-}
-
-interface PaginateResult {
-    data: any[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-    lastPage: number;
-}
-type OrderType = 'ASC' | 'DESC';
-interface PaginateXOptions {
-    orderField: string;
-    orderType: OrderType;
-    limit?: number; // 可选的每页数量限制
-}
 
 import { databaseConfig } from './config';
 import DbRaw from './DbRaw';
+import { DbException } from './exception/DbException';
 
 class Db {
     options: DbOptions;
@@ -76,6 +37,10 @@ class Db {
         }
     }
 
+    /**
+     * 设置表名
+     * @param tableName 表名
+     */
     static table(tableName: string): Db {
         const obj = new Db();
         obj.options.table = tableName;
@@ -84,12 +49,6 @@ class Db {
         }
         return obj;
     }
-
-    alias(alias: string): Db {
-        this.options.alias = alias;
-        return this;
-    }
-
     /**
      * 设置表名
      * @param tableName 表名
@@ -98,6 +57,17 @@ class Db {
         this.options.table = tableName;
         return this;
     }
+
+    /**
+     * 设置表别名
+     * @param alias 表别名
+     */
+    alias(alias: string): Db {
+        this.options.alias = alias;
+        return this;
+    }
+
+
 
     // SECTION 功能方法
 
@@ -112,6 +82,14 @@ class Db {
     where(field: string, value: any): Db;
     where(field: string, operator: string, value: any): Db;
     where(arg1: any, arg2?: any, arg3?: any): Db {
+        // console.log(`参数长度${arguments.length}`,arguments);
+
+        if (Array.from(arguments).includes(undefined)) {
+            throw new DbException('where条件参数不能包含undefined',0,{
+                args: Array.from(arguments),
+            });
+        }
+
         if (arguments.length === 1) {
             if (typeof arg1 === 'function') {
                 // 闭包查询
@@ -413,12 +391,12 @@ class Db {
     async select(): Promise<any[] | string> {
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('select').dest();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.options.fetchSql) {
             return result as string;
         }
-        
+
         return result;
     }
 
@@ -426,6 +404,7 @@ class Db {
      * 分页查询
      * @param page 页码
      * @param limit 每页条数
+     * 
      */
     async paginate(page: number, limit: number): Promise<PaginateResult> {
         // 如果是fetchSql模式，直接返回SQL语句
@@ -434,10 +413,10 @@ class Db {
             const offset = (page - 1) * limit;
             this.limit(offset, limit);
             const dataSql = await this.select();
-            
+
             return dataSql as any; // 直接返回SQL字符串
         }
-        
+
         // 创建一个新的Db实例来计算总数，避免状态污染
         const countDb = new Db();
         // 复制当前查询条件到计算总数的实例
@@ -450,25 +429,25 @@ class Db {
             distinct: false,
             field: null
         };
-        
+
         // 计算总数
         const total = await countDb.count() as number;
-        
+
         // 计算偏移量
         const offset = (page - 1) * limit;
-        
+
         // 设置limit和offset进行分页查询
         this.limit(offset, limit);
-        
+
         // 查询数据
         const data = await this.select() as any[];
-        
+
         // 计算是否有更多数据
         const hasMore = offset + limit < total;
-        
+
         // 计算最后一页
         const lastPage = Math.ceil(total / limit) || 1; // 至少为1页
-        
+
         return {
             data,
             total,
@@ -486,10 +465,10 @@ class Db {
      */
     async paginateX(lastIndex: number, options: PaginateXOptions): Promise<any> {
         const { orderField, orderType, limit: pageLimit } = options;
-        
+
         // 设置排序
         this.order(orderField, orderType);
-        
+
         // 根据lastIndex设置where条件进行游标分页
         if (lastIndex > 0) {
             if (orderType === 'ASC') {
@@ -500,19 +479,19 @@ class Db {
                 this.where(orderField, '<', lastIndex);
             }
         }
-        
+
         // 设置分页限制，优先使用options中的limit，其次使用当前设置的limitValue，最后使用默认值10
         const finalLimit = pageLimit || (Array.isArray(this.options.limitValue) ? this.options.limitValue[1] : this.options.limitValue) || 10;
         this.limit(finalLimit);
-        
+
         // 查询数据
         const data = await this.select();
-        
+
         // 如果是fetchSql模式，直接返回SQL语句
         if (this.options.fetchSql) {
             return data as any; // 直接返回SQL字符串
         }
-        
+
         return {
             data,
             hasMore: data.length === finalLimit, // 如果返回的数据条数等于limit，说明可能还有更多数据
@@ -572,12 +551,12 @@ class Db {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('count').dest();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.options.fetchSql) {
             return result as string;
         }
-        
+
         return result && result.length ? result[0].count : 0;
     }
 
@@ -585,12 +564,12 @@ class Db {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('sum').dest();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.options.fetchSql) {
             return result as string;
         }
-        
+
         return result && result.length ? result[0].sum : 0;
     }
 
@@ -598,12 +577,12 @@ class Db {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('avg').dest();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.options.fetchSql) {
             return result as string;
         }
-        
+
         return result && result.length ? result[0].avg : 0;
     }
 
@@ -611,12 +590,12 @@ class Db {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('max').dest();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.options.fetchSql) {
             return result as string;
         }
-        
+
         return result && result.length ? result[0].max : 0;
     }
 
@@ -624,12 +603,12 @@ class Db {
         this.options.field = field;
         const gateway = await this.getQueryInstance();
         const result = await gateway.action('min').dest();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.options.fetchSql) {
             return result as string;
         }
-        
+
         return result && result.length ? result[0].min : 0;
     }
 
@@ -668,6 +647,9 @@ class Db {
         }
     }
 
+    /**
+     * 开启事务
+     */
     static async startTrans(): Promise<void> {
         const db = new Db();
         db.options.transaction = true;
@@ -676,6 +658,9 @@ class Db {
         Db.transactionConnection = await gateway.startTransaction();
     }
 
+    /**
+     * 提交事务
+     */
     static async commit(): Promise<void> {
         if (!Db.transactionConnection) {
             throw new Error('没有活动的事务连接');
@@ -787,7 +772,7 @@ class Db {
     /**
      * 选择数据库连接（为了兼容性保留）
      * @param name 连接名称
-     * @deprecated 请使用 selectConnect 方法
+     *
      */
     static connect(name: string): Db {
         const db = new Db();

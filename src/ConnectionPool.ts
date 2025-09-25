@@ -2,6 +2,9 @@ import mysql from 'mysql2/promise';
 import type { Pool, Connection, PoolConnection } from 'mysql2/promise';
 import { databaseConfig } from './config';
 
+/**
+ * 连接池配置
+ */
 interface PoolConfig {
     /**
      * 连接池最大连接数
@@ -29,6 +32,9 @@ interface PoolConfig {
     idleTimeout?: number;
 }
 
+/**
+ * 连接信息
+ */
 interface ConnectionInfo {
     pool?: Pool;
     config: PoolConfig;
@@ -231,8 +237,6 @@ class ConnectionPool {
             connectionName: name,
             isPoolEnabled: connectionInfo.isPoolEnabled,
             config: connectionInfo.config,
-            // 基本连接池信息
-            poolConfig: connectionInfo.config,
         };
     }
 
