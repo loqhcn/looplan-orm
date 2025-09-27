@@ -1,0 +1,142 @@
+{
+  "space": "looplan",
+  "name": "ct_user_service",
+  "table": "ct_user_service",
+  "row": {
+    "name": "ct_user_service",
+    "title": "用户-服务",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": 1752725941
+  },
+  "items": [
+    {
+      "title": "名称",
+      "name": "title",
+      "type": "string",
+      "type_usage": null,
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 8,
+      "origin": null
+    },
+    {
+      "title": "引用名称",
+      "name": "name",
+      "type": "string",
+      "type_usage": "",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 7,
+      "origin": null
+    },
+    {
+      "title": "服务到期时间",
+      "name": "endtime",
+      "type": "time",
+      "type_usage": "time",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 6,
+      "origin": null
+    },
+    {
+      "title": "服务类型",
+      "name": "type",
+      "type": "string",
+      "type_usage": "text",
+      "data": null,
+      "notnull": 0,
+      "describe": "服务类型",
+      "default": "",
+      "weight": 5,
+      "origin": null
+    },
+    {
+      "title": "服务信息",
+      "name": "detail",
+      "type": "string",
+      "type_usage": "text",
+      "data": null,
+      "notnull": 0,
+      "describe": "关联对应的服务信息",
+      "default": "",
+      "weight": 4,
+      "origin": null
+    },
+    {
+      "title": "累积消耗金额",
+      "name": "number",
+      "type": "number",
+      "type_usage": "money",
+      "data": null,
+      "notnull": 0,
+      "describe": "消耗金额",
+      "default": "",
+      "weight": 3,
+      "origin": null
+    },
+    {
+      "title": "创建时间",
+      "name": "createdAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "更新时间",
+      "name": "updatedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 1,
+      "origin": null
+    },
+    {
+      "title": "删除时间",
+      "name": "deletedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 0,
+      "origin": null
+    },
+    {
+      "title": "用户ID",
+      "name": "userId",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": [],
+      "notnull": 0,
+      "describe": "用户ID",
+      "default": "",
+      "weight": 0,
+      "origin": {
+        "type": "imports",
+        "title": "导入",
+        "model_id": 200102
+      }
+    }
+  ],
+  "options": [],
+  "relations": []
+}

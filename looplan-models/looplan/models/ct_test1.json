@@ -1,0 +1,169 @@
+{
+  "space": "looplan",
+  "name": "ct_test1",
+  "table": "ct_test1",
+  "row": {
+    "name": "ct_test1",
+    "title": "测试模型1",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": null
+  },
+  "items": [
+    {
+      "title": "姓名",
+      "name": "name",
+      "type": "string",
+      "type_usage": "text",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 9,
+      "origin": null
+    },
+    {
+      "title": "年龄",
+      "name": "age",
+      "type": "int",
+      "type_usage": "number",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 8,
+      "origin": null
+    },
+    {
+      "title": "名称",
+      "name": "title",
+      "type": "string",
+      "type_usage": "",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 7,
+      "origin": null
+    },
+    {
+      "title": "生日",
+      "name": "birthday",
+      "type": "time",
+      "type_usage": "date",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 6,
+      "origin": null
+    },
+    {
+      "title": "状态",
+      "name": "status",
+      "type": "int",
+      "type_usage": "status",
+      "data": {
+        "enum": "visibleStatus"
+      },
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 5,
+      "origin": null
+    },
+    {
+      "title": "用户ID",
+      "name": "user_id",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 4,
+      "origin": null
+    },
+    {
+      "title": "余额",
+      "name": "money",
+      "type": "number",
+      "type_usage": "money",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "10",
+      "weight": 3,
+      "origin": null
+    },
+    {
+      "title": "测试关联新闻",
+      "name": "newsId",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "支付名称",
+      "name": "pay_title",
+      "type": "string",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 99,
+      "origin": {
+        "type": "extends",
+        "title": "继承",
+        "model_id": 200100
+      }
+    },
+    {
+      "title": "支付时间",
+      "name": "pay_time",
+      "type": "time",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 0,
+      "origin": {
+        "type": "extends",
+        "title": "继承",
+        "model_id": 200100
+      }
+    }
+  ],
+  "options": [],
+  "relations": [
+    {
+      "title": "用户",
+      "name": "user",
+      "model_field": "user_id",
+      "relation_model_field": "id",
+      "relation_type": "row",
+      "relation_fields": null,
+      "notes": "测试1.用户",
+      "relation_model_name": "ct_user"
+    },
+    {
+      "title": "news",
+      "name": "news",
+      "model_field": "newsId",
+      "relation_model_field": "id",
+      "relation_type": "row",
+      "relation_fields": [],
+      "notes": null,
+      "relation_model_name": "ct_news"
+    }
+  ]
+}

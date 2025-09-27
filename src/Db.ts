@@ -10,6 +10,8 @@ import type {
 import { databaseConfig } from './config';
 import DbRaw from './DbRaw';
 import { DbException } from './exception/DbException';
+import { transactionManager } from './lib/TransactionManager';
+import { getReqId } from './lib/dbAsyncLocalStorage'
 
 class Db {
     options: DbOptions;
@@ -85,7 +87,7 @@ class Db {
         // console.log(`参数长度${arguments.length}`,arguments);
 
         if (Array.from(arguments).includes(undefined)) {
-            throw new DbException('where条件参数不能包含undefined',0,{
+            throw new DbException('where条件参数不能包含undefined', 0, {
                 args: Array.from(arguments),
             });
         }
@@ -647,44 +649,55 @@ class Db {
         }
     }
 
+
+
     /**
      * 开启事务
      */
     static async startTrans(): Promise<void> {
-        const db = new Db();
-        db.options.transaction = true;
-        Db.inTransaction = true;
-        const gateway = await db.getQueryInstance();
-        Db.transactionConnection = await gateway.startTransaction();
+        // const db = new Db();
+        // db.options.transaction = true;
+        // Db.inTransaction = true;
+        // const gateway = await db.getQueryInstance();
+        // Db.transactionConnection = await gateway.startTransaction();
+        const reqId = getReqId();
+        transactionManager.startTransaction(reqId);
     }
 
     /**
      * 提交事务
      */
     static async commit(): Promise<void> {
-        if (!Db.transactionConnection) {
-            throw new Error('没有活动的事务连接');
+        const reqId = getReqId();
+        console.log('事务 commit', reqId);
+        const hasTransaction = transactionManager.hasTransaction(reqId);
+        if (!hasTransaction) {
+            throw new DbException('没有活动的事务连接');
         }
+        await transactionManager.commitTransaction(reqId);
 
-        const db = new Db();
-        db.options.transaction = true;
-        const gateway = await db.getQueryInstance();
-        await gateway.commit(Db.transactionConnection);
-        Db.transactionConnection = null;
-        Db.inTransaction = false;
+        // const db = new Db();
+        // db.options.transaction = true;
+        // const gateway = await db.getQueryInstance();
+        // await gateway.commit(Db.transactionConnection);
+        // Db.transactionConnection = null;
+        // Db.inTransaction = false;
     }
 
     static async rollback(): Promise<void> {
-        if (!Db.transactionConnection) {
-            throw new Error('没有活动的事务连接');
+        const reqId = getReqId();
+        const hasTransaction = transactionManager.hasTransaction(reqId);
+        if (!hasTransaction) {
+            throw new DbException('没有活动的事务连接');
         }
+        await transactionManager.rollbackTransaction(reqId);
 
-        const db = new Db();
-        db.options.transaction = true;
-        const gateway = await db.getQueryInstance();
-        await gateway.rollback(Db.transactionConnection);
-        Db.transactionConnection = null;
-        Db.inTransaction = false;
+        // const db = new Db();
+        // db.options.transaction = true;
+        // const gateway = await db.getQueryInstance();
+        // await gateway.rollback(Db.transactionConnection);
+        // Db.transactionConnection = null;
+        // Db.inTransaction = false;
     }
 
     // !SECTION 事务处理

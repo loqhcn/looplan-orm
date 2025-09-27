@@ -1,0 +1,126 @@
+{
+  "space": "looplan",
+  "name": "ct_cloud_components",
+  "table": "ct_cloud_components",
+  "row": {
+    "name": "ct_cloud_components",
+    "title": "云组件",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": 1756387350
+  },
+  "items": [
+    {
+      "title": "用户ID",
+      "name": "userId",
+      "type": "number",
+      "type_usage": "relation_id",
+      "data": [],
+      "notnull": 0,
+      "describe": "发布人",
+      "default": "",
+      "weight": 8,
+      "origin": null
+    },
+    {
+      "title": "应用名称",
+      "name": "title",
+      "type": "string",
+      "type_usage": "text",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 7,
+      "origin": null
+    },
+    {
+      "title": "标识名",
+      "name": "name",
+      "type": "string",
+      "type_usage": "text",
+      "data": [],
+      "notnull": 0,
+      "describe": "标识字符串",
+      "default": "",
+      "weight": 6,
+      "origin": null
+    },
+    {
+      "title": "介绍",
+      "name": "description",
+      "type": "string",
+      "type_usage": null,
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 5,
+      "origin": null
+    },
+    {
+      "title": "目录",
+      "name": "dir",
+      "type": "string",
+      "type_usage": "text",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 4,
+      "origin": null
+    },
+    {
+      "title": "创建时间",
+      "name": "createdAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 3,
+      "origin": null
+    },
+    {
+      "title": "更新时间",
+      "name": "updatedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "删除时间",
+      "name": "deletedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 1,
+      "origin": null
+    },
+    {
+      "title": "分类ID",
+      "name": "categoryId",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 0,
+      "origin": null
+    }
+  ],
+  "options": [],
+  "relations": []
+}

@@ -1,0 +1,283 @@
+{
+  "space": "looplan",
+  "name": "ct_plan",
+  "table": "ct_plan",
+  "row": {
+    "name": "ct_plan",
+    "title": "计划",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": null
+  },
+  "items": [
+    {
+      "title": "名称",
+      "name": "title",
+      "type": "string",
+      "type_usage": null,
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 9,
+      "origin": null
+    },
+    {
+      "title": "图标",
+      "name": "icon",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 8,
+      "origin": null
+    },
+    {
+      "title": "状态",
+      "name": "status",
+      "type": "int",
+      "type_usage": "status",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 7,
+      "origin": null
+    },
+    {
+      "title": "类型",
+      "name": "type",
+      "type": "int",
+      "type_usage": null,
+      "data": {
+        "enum": "planNotifyType"
+      },
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 6,
+      "origin": null
+    },
+    {
+      "title": "周期-开始",
+      "name": "time_begin",
+      "type": "time",
+      "type_usage": "",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 5,
+      "origin": null
+    },
+    {
+      "title": "周期-结束",
+      "name": "time_end",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 4,
+      "origin": null
+    },
+    {
+      "title": "创建时间",
+      "name": "createtime",
+      "type": "time",
+      "type_usage": "time",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 3,
+      "origin": null
+    },
+    {
+      "title": "更新时间",
+      "name": "updatetime",
+      "type": "time",
+      "type_usage": "time",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "删除时间",
+      "name": "deletetime",
+      "type": "time",
+      "type_usage": "time",
+      "data": [],
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 1,
+      "origin": null
+    },
+    {
+      "title": "用户ID",
+      "name": "userId",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": [],
+      "notnull": 0,
+      "describe": "用户ID",
+      "default": "",
+      "weight": 0,
+      "origin": {
+        "type": "imports",
+        "title": "导入",
+        "model_id": 200102
+      }
+    }
+  ],
+  "options": [
+    {
+      "id": 51,
+      "title": "默认名称",
+      "name": "",
+      "desc": "",
+      "model_id": 200108,
+      "user_id": 77,
+      "createtime": 1742288306,
+      "updatetime": 1742288306,
+      "deletetime": null,
+      "item_config": [
+        {
+          "title": "ID",
+          "id": "-",
+          "default": "",
+          "component": "text_show",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "id"
+        },
+        {
+          "title": "名称",
+          "id": 1041,
+          "weight": 9,
+          "default": "",
+          "component": "string",
+          "match_mode": "=",
+          "visible": 1,
+          "name": "title"
+        },
+        {
+          "title": "图标",
+          "id": 1042,
+          "weight": 8,
+          "default": "",
+          "component": "int",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "icon"
+        },
+        {
+          "title": "状态",
+          "id": 1043,
+          "weight": 7,
+          "default": "",
+          "component": "int",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "status"
+        },
+        {
+          "title": "类型",
+          "id": 1045,
+          "weight": 6,
+          "default": "",
+          "component": "int",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "type"
+        },
+        {
+          "title": "周期-开始",
+          "id": 1056,
+          "weight": 5,
+          "default": "",
+          "component": "time",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "time_begin"
+        },
+        {
+          "title": "周期-结束",
+          "id": 1057,
+          "weight": 4,
+          "default": "",
+          "component": "time",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "time_end"
+        },
+        {
+          "title": "创建时间",
+          "id": 1047,
+          "weight": 3,
+          "default": "",
+          "component": "time",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "createtime"
+        },
+        {
+          "title": "更新时间",
+          "id": 1048,
+          "weight": 2,
+          "default": "",
+          "component": "time",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "updatetime"
+        },
+        {
+          "title": "删除时间",
+          "id": 1049,
+          "weight": 1,
+          "default": "",
+          "component": "time",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "deletetime"
+        },
+        {
+          "title": "用户ID",
+          "id": 987,
+          "weight": 99,
+          "default": "",
+          "component": "string",
+          "match_mode": "=",
+          "visible": 0,
+          "name": "user_id"
+        }
+      ],
+      "type": "filter",
+      "type_config": {
+        "title": "默认名称",
+        "status": "1"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "title": "icon",
+      "name": "icon",
+      "model_field": "icon",
+      "relation_model_field": "name",
+      "relation_type": "row",
+      "relation_fields": [],
+      "notes": null,
+      "relation_model_name": "ct_plan_icon"
+    }
+  ]
+}

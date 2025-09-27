@@ -1,24 +1,24 @@
 {
-    "name":"测试模型引用",
-    "gateway":"http://model.lqh.cn",
-    "userId":77,
-    "appId":77001,
-    "accessToken":"content@123456",
+    "name": "测试模型引用",
+    "gateway": "http://model.lqh.cn",
+    "userId": 77,
+    "appId": 77001,
+    "authType": "rsa",
+    "authTokenName": "test_dev",
+    "modelDir": "looplan-models",
+    "authKeyPath": "test-keys/looplan_model_keys/private.pem",
+    "accessToken": "content@123456",
     // 认证配置
-    "auth":[
+    "auth": [
         {
-            "name":"user",
-            "model":"ct_user",
-            "plugins":[
-
-            ]
+            "name": "user",
+            "model": "ct_user",
+            "plugins": []
         },
         {
-            "name":"admin",
-            "model":"ct_admin",
-            "plugins":[
-                
-            ]
+            "name": "admin",
+            "model": "ct_admin",
+            "plugins": []
         }
     ]
 }

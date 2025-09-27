@@ -1,0 +1,114 @@
+{
+  "space": "looplan",
+  "name": "ct_cloud_icon",
+  "table": "ct_cloud_icon",
+  "row": {
+    "name": "ct_cloud_icon",
+    "title": "新建模型",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": 1758059890
+  },
+  "items": [
+    {
+      "title": "名称",
+      "name": "title",
+      "type": "string",
+      "type_usage": "text",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 7,
+      "origin": null
+    },
+    {
+      "title": "引用名称",
+      "name": "name",
+      "type": "string",
+      "type_usage": "text",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 6,
+      "origin": null
+    },
+    {
+      "title": "类型",
+      "name": "type",
+      "type": "string",
+      "type_usage": "status",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 5,
+      "origin": null
+    },
+    {
+      "title": "数据",
+      "name": "data",
+      "type": "object",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "对应类型的配置数据",
+      "default": "",
+      "weight": 4,
+      "origin": null
+    },
+    {
+      "title": "图标数据",
+      "name": "icons",
+      "type": "object",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "key-value",
+      "default": "",
+      "weight": 3,
+      "origin": null
+    },
+    {
+      "title": "创建时间",
+      "name": "createdAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "更新时间",
+      "name": "updatedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 1,
+      "origin": null
+    },
+    {
+      "title": "删除时间",
+      "name": "deletedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 0,
+      "origin": null
+    }
+  ],
+  "options": [],
+  "relations": []
+}

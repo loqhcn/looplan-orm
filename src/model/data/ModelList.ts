@@ -192,6 +192,10 @@ class ModelList {
         return this.items.map(item => item.toObject());
     }
 
+    toData(): Record<string, any>[] {
+        return this.toArray();
+    }
+
     /**
      * 转换为ModelRow数组
      */

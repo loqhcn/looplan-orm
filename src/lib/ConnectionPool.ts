@@ -1,6 +1,8 @@
 import mysql from 'mysql2/promise';
 import type { Pool, Connection, PoolConnection } from 'mysql2/promise';
-import { databaseConfig } from './config';
+import { databaseConfig } from '../config';
+import { getReqId, dbAsyncLocalStorage } from './dbAsyncLocalStorage';
+import { transactionManager } from './TransactionManager';
 
 /**
  * 连接池配置
@@ -42,6 +44,9 @@ interface ConnectionInfo {
     isPoolEnabled: boolean;
 }
 
+/**
+ * 连接池
+ */
 class ConnectionPool {
     /**
      * 连接池映射表
@@ -59,7 +64,7 @@ class ConnectionPool {
     private initialized: boolean = false;
 
     constructor() {
-        
+
     }
 
     /**
@@ -69,17 +74,17 @@ class ConnectionPool {
     initPool() {
         console.log('初始化连接池...');
         this.initialized = true;
-        
+
         // 获取所有连接配置
         const connections = databaseConfig.configs.connections;
-        
+
         for (const [connectionName, connectionConfig] of Object.entries(connections)) {
             // 检查是否配置了连接池
             const poolConfig = databaseConfig.getConnectionPoolConfig(connectionName);
-            
+
             if (poolConfig) {
                 console.log(`为连接 ${connectionName} 创建连接池，配置:`, poolConfig);
-                
+
                 // 创建mysql2连接池，使用正确的PoolOptions
                 const pool = mysql.createPool({
                     host: (connectionConfig as any).host,
@@ -115,21 +120,21 @@ class ConnectionPool {
      */
     async getConnection(connectionName?: string): Promise<Connection> {
         const name = connectionName || databaseConfig.getDefaultConfigName();
-        
+
         // 如果没有初始化连接池，自动初始化基本连接信息
         if (!this.initialized) {
             this.initializeBasicConnections();
         }
-        
+
         let connectionInfo = this.pools.get(name);
-        
-        // 如果连接信息不存在，创建基本连接信息
+
+        // 如果连接信息不存在，创建基本连接信息(不使用连接池)
         if (!connectionInfo) {
-            const connectionConfig = databaseConfig.getConnection(name);
+            const connectionConfig = databaseConfig.getConnectionConfig(name);
             if (!connectionConfig) {
                 throw new Error(`连接配置 ${name} 不存在`);
             }
-            
+
             connectionInfo = {
                 config: { connectionLimit: 1, minLimit: 0 },
                 connectionConfig,
@@ -140,21 +145,53 @@ class ConnectionPool {
 
         this.queryCount++;
 
+        const reqId = getReqId();
+        const isHasTransaction = transactionManager.hasTransaction(reqId);
+
+        // 使用连接池获取连接
         if (connectionInfo.isPoolEnabled && connectionInfo.pool) {
-            // 使用连接池获取连接
-            console.log(`从连接池获取连接: ${name}`);
+            console.log(`连接池 pool: ${name}`);
             return connectionInfo.pool.getConnection();
-        } else {
-            // 创建单独的连接
-            console.log(`创建新连接: ${name}`);
+        }
+        // 创建单独的连接
+        else {
+
+
+            // 事务连接
+            if (isHasTransaction) {
+                console.log(`事务连接: ${name}`);
+                const transactionOption = transactionManager.getConnection(reqId, name);
+                if (transactionOption) {
+                    return transactionOption.connection;
+                }
+            }
+
+
+            console.log(`新连接: ${name}`);
             const config = connectionInfo.connectionConfig as any;
-            return mysql.createConnection({
+            const connection = await mysql.createConnection({
                 host: config.host,
                 user: config.user,
                 password: config.password,
                 database: config.database,
                 port: config.port || 3306,
             });
+
+            // 事务连接
+            if (isHasTransaction) {
+                // 开启事务
+                console.log(`已开启事务: ${name}`);
+                await connection.beginTransaction();
+                // 事务连接
+                console.log(`设置事务连接: ${name}`);
+                transactionManager.setConnection(reqId, name, {
+                    name,
+                    type: config.type,
+                    connection,
+                });
+            }
+
+            return connection;
         }
     }
 
@@ -164,10 +201,10 @@ class ConnectionPool {
     private initializeBasicConnections() {
         console.log('初始化基本连接信息...');
         this.initialized = true;
-        
+
         // 获取所有连接配置
         const connections = databaseConfig.configs.connections;
-        
+
         for (const [connectionName, connectionConfig] of Object.entries(connections)) {
             // 只创建基本连接信息，不创建连接池
             if (!this.pools.has(connectionName)) {
@@ -178,19 +215,21 @@ class ConnectionPool {
                 });
             }
         }
-
-        
     }
 
     /**
-     * 释放连接
+     * TODO 释放连接
      * @param connection 要释放的连接
      * @param connectionName 连接名称
      */
     async releaseConnection(connection: Connection, connectionName?: string): Promise<void> {
         const name = connectionName || databaseConfig.getDefaultConfigName();
         const connectionInfo = this.pools.get(name);
-        
+
+        // TODO -- 事务
+        const reqId = getReqId();
+        const isHasTransaction = transactionManager.hasTransaction(reqId);
+
         if (!connectionInfo) {
             console.warn(`连接 ${name} 不存在，直接关闭连接`);
             await connection.end();
@@ -203,9 +242,11 @@ class ConnectionPool {
             // 对于连接池连接，调用release方法
             (connection as PoolConnection).release();
         } else {
-            // 非连接池模式，直接关闭连接
-            console.log(`关闭连接: ${name}`);
-            await connection.end();
+            if (!isHasTransaction) { //事务状态不关闭
+                // 非连接池模式，直接关闭连接
+                console.log(`关闭连接: ${name}`);
+                await connection.end();
+            }
         }
 
         this.onQueryEnd();
@@ -228,7 +269,7 @@ class ConnectionPool {
     getPoolStatus(connectionName?: string): any {
         const name = connectionName || databaseConfig.getDefaultConfigName();
         const connectionInfo = this.pools.get(name);
-        
+
         if (!connectionInfo || !connectionInfo.pool) {
             return null;
         }
@@ -245,16 +286,16 @@ class ConnectionPool {
      */
     async destroy(): Promise<void> {
         console.log('销毁所有连接池...');
-        
+
         const destroyPromises: Promise<void>[] = [];
-        
+
         for (const [name, connectionInfo] of this.pools.entries()) {
             if (connectionInfo.pool) {
                 console.log(`销毁连接池: ${name}`);
                 destroyPromises.push(connectionInfo.pool.end());
             }
         }
-        
+
         await Promise.all(destroyPromises);
         this.pools.clear();
         this.initialized = false;

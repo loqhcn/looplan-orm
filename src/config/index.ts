@@ -1,4 +1,4 @@
-import ConnectionPool from '../ConnectionPool';
+import ConnectionPool from '../lib/ConnectionPool';
 
 /**
  * 数据库配置
@@ -89,7 +89,7 @@ class DatabaseConfig {
      * @param key 连接配置项
      * @returns 连接配置
      */
-    getConnection(key: string) {
+    getConnectionConfig(key: string) {
         return this.configs.connections[key];
     }
 
@@ -98,9 +98,27 @@ class DatabaseConfig {
      * @param key 连接配置项
      * @param value 连接配置值
      */
-    setConnection(key: string, value: any) {
+    setConnectionConfig(key: string, value: any) {
         this.configs.connections[key] = value;
         return this;
+    }
+
+    /**
+     * 取消设置连接配置
+     * @param key 连接配置项
+     */
+    unsetConnectionConfig(key: string) {
+        delete this.configs.connections[key];
+        return this;
+    }
+
+    /**
+     * 检查是否存在连接配置
+     * @param key 连接配置项
+     * @returns 是否存在连接配置
+     */
+    hasConnectionConfig(key: string): boolean {
+        return this.configs.connections.hasOwnProperty(key);
     }
 
     /**

@@ -1,0 +1,102 @@
+{
+  "space": "looplan",
+  "name": "ct_user_key",
+  "table": "ct_user_key",
+  "row": {
+    "name": "ct_user_key",
+    "title": "用户秘钥",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": 1752726798
+  },
+  "items": [
+    {
+      "title": "标题",
+      "name": "title",
+      "type": "string",
+      "type_usage": "text",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 6,
+      "origin": null
+    },
+    {
+      "title": "用户ID",
+      "name": "userId",
+      "type": "number",
+      "type_usage": "relation_id",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 5,
+      "origin": null
+    },
+    {
+      "title": "秘钥",
+      "name": "key",
+      "type": "string",
+      "type_usage": "text",
+      "data": null,
+      "notnull": 0,
+      "describe": "秘钥(用于jwt签名)",
+      "default": "",
+      "weight": 4,
+      "origin": null
+    },
+    {
+      "title": "状态",
+      "name": "status",
+      "type": "int",
+      "type_usage": "status",
+      "data": null,
+      "notnull": 0,
+      "describe": "1开启 0关闭",
+      "default": "1",
+      "weight": 3,
+      "origin": null
+    },
+    {
+      "title": "创建时间",
+      "name": "createdAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "更新时间",
+      "name": "updatedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 1,
+      "origin": null
+    },
+    {
+      "title": "删除时间",
+      "name": "deletedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 0,
+      "origin": null
+    }
+  ],
+  "options": [],
+  "relations": []
+}

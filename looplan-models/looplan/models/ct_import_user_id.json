@@ -1,0 +1,30 @@
+{
+  "space": "looplan",
+  "name": "ct_import_user_id",
+  "table": "ct_import_user_id",
+  "row": {
+    "name": "ct_import_user_id",
+    "title": "导入用户关联",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "",
+    "updatetime": 1752725789
+  },
+  "items": [
+    {
+      "title": "用户ID",
+      "name": "userId",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": [],
+      "notnull": 0,
+      "describe": "用户ID",
+      "default": "",
+      "weight": 0,
+      "origin": null
+    }
+  ],
+  "options": [],
+  "relations": []
+}

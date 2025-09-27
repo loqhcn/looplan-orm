@@ -1,0 +1,90 @@
+{
+  "space": "looplan",
+  "name": "ct_user_sign",
+  "table": "ct_user_sign",
+  "row": {
+    "name": "ct_user_sign",
+    "title": "用户-签到",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": 1752724892
+  },
+  "items": [
+    {
+      "title": "用户ID",
+      "name": "userId",
+      "type": "number",
+      "type_usage": "relation_id",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 5,
+      "origin": null
+    },
+    {
+      "title": "间隔日期",
+      "name": "intervalDay",
+      "type": "int",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "间隔天数, 用于处理连续签到",
+      "default": "",
+      "weight": 4,
+      "origin": null
+    },
+    {
+      "title": "奖励数据",
+      "name": "awards",
+      "type": "array",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "奖励",
+      "default": "",
+      "weight": 3,
+      "origin": null
+    },
+    {
+      "title": "创建时间",
+      "name": "createdAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "更新时间",
+      "name": "updatedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 1,
+      "origin": null
+    },
+    {
+      "title": "删除时间",
+      "name": "deletedAt",
+      "type": "time",
+      "type_usage": "time",
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 0,
+      "origin": null
+    }
+  ],
+  "options": [],
+  "relations": []
+}

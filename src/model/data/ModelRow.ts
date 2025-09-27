@@ -11,7 +11,7 @@ class ModelRow {
         this.tableName = tableName;
         this.primaryKey = primaryKey;
         this.originalData = { ...data };
-        
+
         // 将数据属性复制到当前实例
         Object.keys(data).forEach(key => {
             this[key] = data[key];
@@ -21,11 +21,11 @@ class ModelRow {
         return new Proxy(this, {
             get(target: ModelRow, prop: string | symbol) {
                 // 如果是内部方法或属性，正常返回
-                if (typeof prop === 'string' && 
+                if (typeof prop === 'string' &&
                     ['save', 'delete', 'refresh', 'toObject', 'isDirty', 'tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(prop)) {
                     return target[prop];
                 }
-                
+
                 // 对于数据属性，直接返回
                 return target[prop as string];
             },
@@ -39,7 +39,7 @@ class ModelRow {
 
             ownKeys(target: ModelRow) {
                 // 只返回数据属性的键，不包含内部属性和方法
-                const dataKeys = Object.keys(target).filter(key => 
+                const dataKeys = Object.keys(target).filter(key =>
                     !['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
                     typeof target[key] !== 'function'
                 );
@@ -47,7 +47,7 @@ class ModelRow {
             },
 
             getOwnPropertyDescriptor(target: ModelRow, prop: string | symbol) {
-                if (typeof prop === 'string' && 
+                if (typeof prop === 'string' &&
                     !['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(prop) &&
                     typeof target[prop] !== 'function') {
                     return {
@@ -73,7 +73,7 @@ class ModelRow {
         if (data && typeof data === 'object') {
             changedFields = { ...data };
             hasChanges = Object.keys(data).length > 0;
-            
+
             // 同时更新当前实例的属性
             Object.keys(data).forEach(key => {
                 this[key] = data[key];
@@ -90,7 +90,7 @@ class ModelRow {
 
             // 检查新增的属性
             Object.keys(this).forEach(key => {
-                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) && 
+                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
                     typeof this[key] !== 'function' &&
                     !(key in this.originalData)) {
                     changedFields[key] = this[key];
@@ -109,7 +109,7 @@ class ModelRow {
             const result = await Db.table(this.tableName)
                 .where(this.primaryKey, primaryKeyValue)
                 .update(changedFields);
-            
+
             // 更新原始数据
             Object.assign(this.originalData, changedFields);
             return result;
@@ -117,18 +117,18 @@ class ModelRow {
             // 没有主键值，执行插入操作
             const allData: Record<string, any> = {};
             Object.keys(this).forEach(key => {
-                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) && 
+                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
                     typeof this[key] !== 'function') {
                     allData[key] = this[key];
                 }
             });
 
             const result = await Db.table(this.tableName).insertGetId(allData);
-            
+
             // 设置新的主键值
             this[this.primaryKey] = result;
             this.originalData = { ...allData, [this.primaryKey]: result };
-            
+
             return result;
         }
     }
@@ -163,7 +163,7 @@ class ModelRow {
         if (freshData) {
             // 清除当前数据
             Object.keys(this).forEach(key => {
-                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) && 
+                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
                     typeof this[key] !== 'function') {
                     delete this[key];
                 }
@@ -185,7 +185,7 @@ class ModelRow {
     toObject(): Record<string, any> {
         const result: Record<string, any> = {};
         Object.keys(this).forEach(key => {
-            if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) && 
+            if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
                 typeof this[key] !== 'function') {
                 result[key] = this[key];
             }
@@ -193,16 +193,20 @@ class ModelRow {
         return result;
     }
 
+    toData(): Record<string, any> {
+        return this.toObject();
+    }
+
     /**
      * 检查是否有未保存的更改
      */
     isDirty(): boolean {
         return Object.keys(this.originalData).some(key => this[key] !== this.originalData[key]) ||
-               Object.keys(this).some(key => 
-                   !['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) && 
-                   typeof this[key] !== 'function' &&
-                   !(key in this.originalData)
-               );
+            Object.keys(this).some(key =>
+                !['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
+                typeof this[key] !== 'function' &&
+                !(key in this.originalData)
+            );
     }
 
     /**

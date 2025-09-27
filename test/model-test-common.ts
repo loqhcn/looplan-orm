@@ -8,7 +8,6 @@ const rootDir = path.resolve(__dirname, '../');
 console.log(rootDir);
 
 function initModel() {
-
     // 设置配置
     databaseConfig.setConfig({
         default: 'mysql',  // 默认连接
@@ -24,9 +23,11 @@ function initModel() {
     });
 
     modelConfig.config('rootDir', rootDir);
+    modelConfig.config('modelDir', path.join(rootDir, 'looplan-models'));
+    modelConfig.config('modelDefaultSpace', 'looplan');
     console.log(modelConfig.config('rootDir'));
+    console.log(modelConfig.config('modelDir'));
     const modelTool = new ModelTool();
     modelConfig.config('modelTool', modelTool); //注入modelTool,用于获取模型
-
 }
-export { initModel};
+export { initModel };

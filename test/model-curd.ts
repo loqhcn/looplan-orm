@@ -5,18 +5,18 @@ initModel();
 
 console.log("# 查询&修改");
 
-// console.log("## 获取多个数据");
-// const row = await model('ct_test1').find()
-// console.log(row);
+console.log("## 获取多个数据");
+const row = await model('test_dev/sl_test_news').find()
+console.log(row.toData());
 // row.name = 'test'+Date.now();
 // await row.save();
 
 
-const row2 = await model('ct_test1').where('id',2).find()
-let saveRet = await row2.save({
-    name:'name'+Date.now()
-});
-console.log(saveRet);
+// const row2 = await model('ct_test1').where('id',2).find()
+// let saveRet = await row2.save({
+//     name:'name'+Date.now()
+// });
+// console.log(saveRet);
 
 // console.log("# 删除");
 // const row3 = await model('ct_test1').where('id',3).find()

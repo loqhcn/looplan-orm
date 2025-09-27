@@ -1,0 +1,70 @@
+{
+  "space": "looplan",
+  "name": "ct_user_config",
+  "table": "ct_user_config",
+  "row": {
+    "name": "ct_user_config",
+    "title": "用户-配置",
+    "type": "db",
+    "img": "",
+    "options": {},
+    "storage_engine": "mulo-content",
+    "updatetime": null
+  },
+  "items": [
+    {
+      "title": "名称",
+      "name": "title",
+      "type": "string",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 2,
+      "origin": null
+    },
+    {
+      "title": "Object",
+      "name": "object",
+      "type": "object",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 1,
+      "origin": null
+    },
+    {
+      "title": "String",
+      "name": "name",
+      "type": "string",
+      "type_usage": null,
+      "data": null,
+      "notnull": 0,
+      "describe": "",
+      "default": "",
+      "weight": 0,
+      "origin": null
+    },
+    {
+      "title": "用户ID",
+      "name": "userId",
+      "type": "int",
+      "type_usage": "relation_id",
+      "data": [],
+      "notnull": 0,
+      "describe": "用户ID",
+      "default": "",
+      "weight": 0,
+      "origin": {
+        "type": "imports",
+        "title": "导入",
+        "model_id": 200102
+      }
+    }
+  ],
+  "options": [],
+  "relations": []
+}

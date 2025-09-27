@@ -3,7 +3,7 @@ import { modelConfig } from './config/ModelConfig';
 import ModelRow from './data/ModelRow';
 import ModelList from './data/ModelList';
 
-interface ModelInterface {
+export interface ModelInterface {
     table: string;
     relations?: Array<{
         name: string;
@@ -25,7 +25,7 @@ class Model {
     constructor(modelName: string) {
         this.modelName = modelName;
         this.dbInstance = Db.table(modelName);
-        
+
         // 尝试加载模型定义
         try {
             const modelTool = modelConfig.config('modelTool');
@@ -38,6 +38,7 @@ class Model {
             }
         } catch (error: any) {
             console.warn(`获取模型数据失败: ${error.message}`);
+            throw error;
         }
     }
 
@@ -56,21 +57,21 @@ class Model {
      */
     async select(): Promise<ModelList | string> {
         const rows = await this.dbInstance.select();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.dbInstance.options.fetchSql) {
             return rows as string;
         }
-        
+
         // 处理关联数据
         let processedRows = rows as any[];
         if (this.withRelations.length > 0 && this.modelData) {
             processedRows = await this.loadRelations(rows as any[]);
         }
-        
+
         // 获取表名 - 优先使用模型定义中的表名，否则使用模型名
         const tableName = this.modelData?.table || this.modelName;
-        
+
         return new ModelList(tableName, processedRows);
     }
 
@@ -80,33 +81,33 @@ class Model {
      */
     async find(id?: any): Promise<ModelRow | string | null> {
         let queryInstance = this.dbInstance;
-        
+
         // 如果提供了ID，添加where条件
         if (id !== undefined) {
             queryInstance = this.dbInstance.where('id', id);
         }
-        
+
         const row = await queryInstance.find();
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.dbInstance.options.fetchSql) {
             return row as string;
         }
-        
+
         if (!row) {
             return null;
         }
-        
+
         // 处理关联数据
         let processedRow = row;
         if (this.withRelations.length > 0 && this.modelData) {
             const rows = await this.loadRelations([row]);
             processedRow = rows[0];
         }
-        
+
         // 获取表名 - 优先使用模型定义中的表名，否则使用模型名
         const tableName = this.modelData?.table || this.modelName;
-        
+
         return new ModelRow(tableName, processedRow);
     }
 
@@ -118,26 +119,26 @@ class Model {
         if (!rows.length || !this.modelData || !this.modelData.relations) {
             return rows;
         }
-        
+
         // 复制一份数据，避免修改原始数据
         const result = JSON.parse(JSON.stringify(rows));
-        
+
         // 查找要加载的关联
         for (const relationName of this.withRelations) {
             const relation = this.modelData.relations.find(r => r.name === relationName);
-            
+
             if (!relation) continue;
-            
+
             // 收集主表中的关联字段值
             const fieldValues = rows.map(row => row[relation.model_field]).filter(v => v !== undefined && v !== null);
-            
+
             if (fieldValues.length === 0) continue;
-            
+
             // 查询关联表
             const relationData = await Db.table(relation.relation_model_name)
                 .where(relation.relation_model_field, 'in', fieldValues)
                 .select() as any[];
-            
+
             // 一对一关联
             if (relation.relation_type === 'row') {
                 result.forEach((row: any) => {
@@ -149,7 +150,7 @@ class Model {
                         row[relation.name] = null;
                     }
                 });
-            } 
+            }
             // 一对多关联
             else if (relation.relation_type === 'list') {
                 result.forEach((row: any) => {
@@ -159,7 +160,7 @@ class Model {
                 });
             }
         }
-        
+
         return result;
     }
 
@@ -171,7 +172,7 @@ class Model {
         // 如果有where条件，则为更新操作
         if (this.dbInstance.options.where.length > 0) {
             return this.dbInstance.update(data);
-        } 
+        }
         // 否则为插入操作
         else {
             return this.dbInstance.insert(data);
@@ -199,21 +200,21 @@ class Model {
         lastPage: number;
     }> {
         const result = await this.dbInstance.paginate(page, limit);
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.dbInstance.options.fetchSql) {
             return result as any; // 直接返回SQL字符串
         }
-        
+
         // 处理关联数据
         let processedRows = result.data;
         if (this.withRelations.length > 0 && this.modelData) {
             processedRows = await this.loadRelations(result.data);
         }
-        
+
         // 获取表名 - 优先使用模型定义中的表名，否则使用模型名
         const tableName = this.modelData?.table || this.modelName;
-        
+
         return {
             data: new ModelList(tableName, processedRows),
             total: result.total,
@@ -239,21 +240,21 @@ class Model {
         lastIndex: any;
     }> {
         const result = await this.dbInstance.paginateX(lastIndex, options);
-        
+
         // 如果是fetchSql模式，直接返回SQL字符串
         if (this.dbInstance.options.fetchSql) {
             return result as any; // 直接返回SQL字符串
         }
-        
+
         // 处理关联数据
         let processedRows = result.data;
         if (this.withRelations.length > 0 && this.modelData) {
             processedRows = await this.loadRelations(result.data);
         }
-        
+
         // 获取表名 - 优先使用模型定义中的表名，否则使用模型名
         const tableName = this.modelData?.table || this.modelName;
-        
+
         return {
             data: new ModelList(tableName, processedRows),
             hasMore: result.hasMore,
@@ -269,7 +270,7 @@ class Model {
         if (method === 'paginate' || method === 'paginateX') {
             return (this as any)[method](...args);
         }
-        
+
         if (typeof (this.dbInstance as any)[method] === 'function') {
             // 创建新的Model实例，避免状态相互影响
             const newModel = new Model(this.modelName);
@@ -295,9 +296,9 @@ function model(modelName: string) {
             if (prop in target) {
                 return target[prop];
             }
-            
+
             // 否则尝试将调用转发到Db类
-            return function(...args: any[]) {
+            return function (...args: any[]) {
                 return target.passToDb(prop as string, args);
             };
         }

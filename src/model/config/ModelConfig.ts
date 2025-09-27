@@ -1,11 +1,20 @@
 class ModelConfig {
     configs: {
+        /**
+         * 根目录
+         */
         rootDir: string,
+        /**
+         * 模型目录
+         */
+        modelDir: string,
         [key: string]: any
     }
+
     constructor(configs: any = null) {
         this.configs = Object.assign({
             rootDir: '',
+            modelDir: 'looplan-models',
         }, configs);
     }
 
@@ -13,7 +22,7 @@ class ModelConfig {
      * 设置|获取配置
      * @param name 配置名
      * @param value 配置值
-     * @returns 
+     * @returns 配置值
      */
     config(name: string, value?: any) {
         if (value === undefined) {

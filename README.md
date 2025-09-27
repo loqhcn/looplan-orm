@@ -6,6 +6,7 @@ Looplan ORM是一个模仿ThinkPHP风格的TypeScript数据库操作库，提供
 - 2025年6月30日: 连接池能力
 - 2025年7月3日: 数据模型功能持续完善中
 - 2025年7月5日: sql注入防护功能
+- 2025年9月26日: 事务管理器增强(解决并发时事务冲突)
 
 ## 安装
 
@@ -158,6 +159,43 @@ const results = await Db.query('SELECT * FROM prefix_user WHERE id = :id', { id:
 ```
 
 ## 事务操作
+
+> 事务基于请求ID, 并发执行时需要指定请求ID, 否则默认使用 'main' 作为请求ID
+
+> 事务中对于多个数据库连接的情况,是每个数据库连接都会创建事务
+
+### 请求ID
+
+```typescript
+import { Db, requestRun } from '../src';
+import { randomUUID } from 'node:crypto';
+
+// 生成请求ID
+const reqId = randomUUID();
+// 执行事务
+async function testDbTransaction() {
+  // 事务操作
+  await Db.startTrans(reqId);
+  try {
+    const data1 = await Db.table('ct_test1').where('id', 1).find();
+    console.log('事务中查询1:', data1);
+
+    const data2 = await Db.table('ct_test1').where('id', 2).update({
+      name: '事务更新测试' + Date.now()
+    });
+    console.log('事务中查询2:', data2);
+
+    await Db.commit();
+  } catch (error) {
+    await Db.rollback();
+    console.error('事务执行失败，已自动回滚:', error);
+  }
+}
+// 执行请求(指定请求ID后, 并发执行不会冲突)
+requestRun(reqId, async () => {
+  await testDbTransaction();
+});
+```
 
 ### 自动事务
 
