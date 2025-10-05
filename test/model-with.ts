@@ -6,20 +6,25 @@ initModel();
 // 加入关联 - 一对一测试
 console.log('# 测试关联模型功能');
 console.log('## 查询带有关联的数据');
-let data4 = await model('ct_news').with(['user']).find(1);
+const newsModel = model('test_dev/sl_test_news');
+const connectionName = newsModel.getConnectionName();
+console.log('connectionName',connectionName);
+let data4 = await newsModel.with(['user']).find(1);
 
 console.log('data4',JSON.stringify(data4));
 
-console.log('### 关联用户数据类型:', data4.user.constructor.name);
-console.log('### 关联用户原始数据:', {
-    id: data4.user.id,
-    nickname: data4.user.nickname,
-    username: data4.user.username
+// console.log('### 关联用户数据类型:', data4.user.constructor.name);
+// console.log('### 关联用户原始数据:', {
+//     id: data4.user.id,
+//     nickname: data4.user.nickname,
+//     username: data4.user.username
+// });
+data4.save({
+    'title': '关联模型修改的标题' + Date.now()
 });
-
 console.log('### 测试关联模型可以调用save方法');
 await data4.user.save({
-    nickname: '通过关联模型修改的昵称' + Date.now()
+    nickname: '关联模型修改的昵称' + Date.now()
 });
 
 

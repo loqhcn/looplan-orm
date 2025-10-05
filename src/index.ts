@@ -2,6 +2,11 @@ import Db from './Db';
 import { DbException } from './exception/DbException';
 import { transactionManager } from './lib/TransactionManager';
 import { dbAsyncLocalStorage, getReqId, requestRun } from './lib/dbAsyncLocalStorage';
+import { setupConnectConfig } from './model/library/setup';
+import { modelConfig } from './model/config/ModelConfig';
+import { ModelTool } from './model/library/ModelTool';
+
+
 
 import {
     databaseConfig,
@@ -25,5 +30,11 @@ export {
     model,
     type ModelInterface,
     requestRun,
+    setupConnectConfig,
+    modelConfig,
+    ModelTool,
+  
 };
 export default Db;
+
+export type { MysqlConfig, ConnectionConfig } from './types/mysql';

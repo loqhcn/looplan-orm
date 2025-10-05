@@ -1,16 +1,16 @@
 import { initModel } from "./model-test-common";
 import { model } from '../src/model/Model';
-
+// 通过 `bun run .\test\model-curd.ts` 运行
 initModel();
-
 console.log("# 查询&修改");
 
 console.log("## 获取多个数据");
-const row = await model('test_dev/sl_test_news').find()
+const row = await model('looplan/ct_test1').find()
 console.log(row.toData());
 // row.name = 'test'+Date.now();
 // await row.save();
-
+const row2 = await model('test_dev/sl_test_news').find()
+console.log(row2.toData());
 
 // const row2 = await model('ct_test1').where('id',2).find()
 // let saveRet = await row2.save({

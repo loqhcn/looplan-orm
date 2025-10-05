@@ -1,5 +1,5 @@
 import { modelConfig } from '../config/ModelConfig';
-import { join } from 'path';
+import path from 'path';
 import fs from 'fs';
 import { DbException } from '../../exception/DbException';
 
@@ -14,16 +14,16 @@ class ModelTool {
     }
 
     getModel(modelName: string) {
-        const { space, model } = this.parseModel(modelName);
-        const modelPath = join(this.modelPath, space,'models', `${model}.json`);
+        const { space, model } = this.parseModelName(modelName);
+        const modelPath = path.join(this.modelPath, space, 'models', `${model}.json`);
         console.log(`读取模型${modelName} 路径:`, modelPath);
         if (!fs.existsSync(modelPath)) {
             throw new DbException(`模型文件 ${modelName} 不存在`);
         }
         return JSON.parse(fs.readFileSync(modelPath, 'utf-8'));
     }
-    
-    parseModel(modelName: string){
+
+    parseModelName(modelName: string) {
         // 模型名称可以是  `空间/模型` | `模型名`
         const modelParts = modelName.split('/');
         let space = modelConfig.config('modelDefaultSpace');
@@ -37,6 +37,7 @@ class ModelTool {
             model,
         }
     }
+
 }
 
 export {

@@ -30,6 +30,8 @@ export default defineConfig({
 				'mysql2',
 				'mysql2/promise',
 				// ...builtinModules,
+				'fs',
+				'path',
 				/^node:.*/  // 排除所有 Node.js 内置模块
 			],
 			output: {

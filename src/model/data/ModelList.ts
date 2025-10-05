@@ -6,12 +6,12 @@ class ModelList {
     private primaryKey: string = 'id';
     [key: number]: ModelRow; // 允许数字索引访问
 
-    constructor(tableName: string, dataList: Record<string, any>[] = [], primaryKey: string = 'id') {
+    constructor(tableName: string, dataList: Record<string, any>[] = [], primaryKey: string = 'id', connectionName: string = 'default') {
         this.tableName = tableName;
         this.primaryKey = primaryKey;
         
         // 将原始数据转换为ModelRow实例
-        this.items = dataList.map(data => new ModelRow(tableName, data, primaryKey));
+        this.items = dataList.map(data => new ModelRow(tableName, data, primaryKey, connectionName));
         
         // 设置数字索引
         this.items.forEach((item, index) => {

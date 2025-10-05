@@ -5,11 +5,13 @@ class ModelRow {
     private originalData: Record<string, any> = {};
     private modifiedData: Record<string, any> = {};
     private primaryKey: string = 'id';
+    private connectionName: string = 'default'; // 添加连接名属性
     [key: string]: any; // 允许动态属性访问
 
-    constructor(tableName: string, data: Record<string, any> = {}, primaryKey: string = 'id') {
+    constructor(tableName: string, data: Record<string, any> = {}, primaryKey: string = 'id', connectionName: string = 'default') {
         this.tableName = tableName;
         this.primaryKey = primaryKey;
+        this.connectionName = connectionName;
         this.originalData = { ...data };
 
         // 将数据属性复制到当前实例
@@ -22,7 +24,7 @@ class ModelRow {
             get(target: ModelRow, prop: string | symbol) {
                 // 如果是内部方法或属性，正常返回
                 if (typeof prop === 'string' &&
-                    ['save', 'delete', 'refresh', 'toObject', 'isDirty', 'tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(prop)) {
+                    ['save', 'delete', 'refresh', 'toObject', 'isDirty', 'tableName', 'originalData', 'modifiedData', 'primaryKey', 'connectionName'].includes(prop)) {
                     return target[prop];
                 }
 
@@ -40,7 +42,7 @@ class ModelRow {
             ownKeys(target: ModelRow) {
                 // 只返回数据属性的键，不包含内部属性和方法
                 const dataKeys = Object.keys(target).filter(key =>
-                    !['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
+                    !['tableName', 'originalData', 'modifiedData', 'primaryKey', 'connectionName'].includes(key) &&
                     typeof target[key] !== 'function'
                 );
                 return dataKeys;
@@ -48,7 +50,7 @@ class ModelRow {
 
             getOwnPropertyDescriptor(target: ModelRow, prop: string | symbol) {
                 if (typeof prop === 'string' &&
-                    !['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(prop) &&
+                    !['tableName', 'originalData', 'modifiedData', 'primaryKey', 'connectionName'].includes(prop) &&
                     typeof target[prop] !== 'function') {
                     return {
                         enumerable: true,
@@ -90,7 +92,7 @@ class ModelRow {
 
             // 检查新增的属性
             Object.keys(this).forEach(key => {
-                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
+                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey', 'connectionName'].includes(key) &&
                     typeof this[key] !== 'function' &&
                     !(key in this.originalData)) {
                     changedFields[key] = this[key];
@@ -106,7 +108,7 @@ class ModelRow {
         // 如果有主键值，执行更新操作
         const primaryKeyValue = this[this.primaryKey];
         if (primaryKeyValue !== undefined && primaryKeyValue !== null) {
-            const result = await Db.table(this.tableName)
+            const result = await Db.connect(this.connectionName).table(this.tableName)
                 .where(this.primaryKey, primaryKeyValue)
                 .update(changedFields);
 
@@ -117,13 +119,13 @@ class ModelRow {
             // 没有主键值，执行插入操作
             const allData: Record<string, any> = {};
             Object.keys(this).forEach(key => {
-                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
+                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey', 'connectionName'].includes(key) &&
                     typeof this[key] !== 'function') {
                     allData[key] = this[key];
                 }
             });
 
-            const result = await Db.table(this.tableName).insertGetId(allData);
+            const result = await Db.connect(this.connectionName).table(this.tableName).insertGetId(allData);
 
             // 设置新的主键值
             this[this.primaryKey] = result;
@@ -142,7 +144,7 @@ class ModelRow {
             throw new Error('无法删除：缺少主键值');
         }
 
-        return await Db.table(this.tableName)
+        return await Db.connect(this.connectionName).table(this.tableName)
             .where(this.primaryKey, primaryKeyValue)
             .delete();
     }
@@ -156,14 +158,14 @@ class ModelRow {
             throw new Error('无法刷新：缺少主键值');
         }
 
-        const freshData = await Db.table(this.tableName)
+        const freshData = await Db.connect(this.connectionName).table(this.tableName)
             .where(this.primaryKey, primaryKeyValue)
             .find();
 
         if (freshData) {
             // 清除当前数据
             Object.keys(this).forEach(key => {
-                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey'].includes(key) &&
+                if (!['tableName', 'originalData', 'modifiedData', 'primaryKey', 'connectionName'].includes(key) &&
                     typeof this[key] !== 'function') {
                     delete this[key];
                 }

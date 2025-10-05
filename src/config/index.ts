@@ -54,7 +54,7 @@ class DatabaseConfig {
      * @param key 配置项
      * @returns 配置值
      */
-    getConfig(key: string) {
+    getConfig() {
         return this.configs;
     }
 

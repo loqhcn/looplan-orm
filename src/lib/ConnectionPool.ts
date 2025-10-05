@@ -119,6 +119,7 @@ class ConnectionPool {
      * @param connectionName 连接名称，如果不指定则使用默认连接
      */
     async getConnection(connectionName?: string): Promise<Connection> {
+        console.log('获取连接',connectionName);
         const name = connectionName || databaseConfig.getDefaultConfigName();
 
         // 如果没有初始化连接池，自动初始化基本连接信息
@@ -134,6 +135,8 @@ class ConnectionPool {
             if (!connectionConfig) {
                 throw new Error(`连接配置 ${name} 不存在`);
             }
+
+            console.log(`connectionConfig`, connectionConfig);
 
             connectionInfo = {
                 config: { connectionLimit: 1, minLimit: 0 },

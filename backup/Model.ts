@@ -396,11 +396,6 @@ function model(modelName: string) {
 
     return new Proxy(modelInstance, {
         get(target: any, prop: string | symbol) {
-            // 特殊处理 then 属性，避免在 async 函数中返回时被误认为是 Promise
-            if (prop === 'then') {
-                return undefined;
-            }
-
             // 优先从Model类获取方法
             if (prop in target) {
                 return target[prop];
